@@ -1,0 +1,20 @@
+(function(root,factory){const value=factory(typeof module==='object'&&module.exports?require('./core.js'):root.Core);if(typeof module==='object'&&module.exports)module.exports=value;else root.TimetableImport=value})(typeof globalThis==='object'?globalThis:this,function(Core){
+ 'use strict';
+ const check=(ok,message)=>{if(!ok)throw Error(message)};
+ function string(value,label,max=20000,fallback=''){if(value===undefined)return fallback;check(typeof value==='string'&&value.length<=max,`${label}必须为不超过${max}字的文字`);return value.trim()}
+ function prepare(state,raw){
+  check(typeof raw==='string'&&raw.length<=1024*1024,'JSON过大，最多1MiB字符');let content=raw.trim().replace(/^\uFEFF/,'');if(/^```/.test(content))content=content.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');let data;try{data=JSON.parse(content)}catch{throw Error('JSON无法解析，请复制AI输出的完整JSON，检查括号、逗号和引号')}
+  check(data&&data.format==='classnote-timetable'&&data.version===1,'请使用classnote-timetable格式，version为1');const sem=data.semester;check(sem&&typeof sem==='object','缺少semester学期设置');check(typeof sem.startDate==='string'&&Number.isInteger(sem.weeks),'学期需要startDate日期和整数weeks周数');const settings={semesterStart:sem.startDate,weeks:sem.weeks,semesterName:string(sem.name,'学期名称',200,'我的学期')||'我的学期'};
+  check(Array.isArray(data.courses)&&data.courses.length>=1&&data.courses.length<=100,'每次导入1–100门课程');let next=Core.clone(state);const hasData=state.courses.length>0||state.notes.length>0||state.tasks.length>0||state.adjustments?.length;
+  if(hasData)check(settings.semesterStart===state.settings.semesterStart&&settings.weeks===state.settings.weeks,'导入学期的起始日和周数须与当前学期一致；请先核对JSON或学期设置，已有资料不会被覆盖');else next.settings=settings;
+  Core.validateState(next);const names=new Set(next.courses.filter(c=>!c.deletedAt).map(c=>c.name.trim().toLowerCase()));
+  for(let i=0;i<data.courses.length;i++){const c=data.courses[i];check(c&&typeof c==='object'&&!Array.isArray(c),`第${i+1}门课程格式错误`);const name=string(c.name,'课程名',200);check(name,'课程名称不能为空');check(!names.has(name.toLowerCase()),`课程“${name}”已存在或重复，请移除重复项；需要修改时请编辑原课程`);names.add(name.toLowerCase());check(c.uniform===undefined||typeof c.uniform==='boolean',`${name}的uniform须为true或false`);check(Array.isArray(c.lessons)&&c.lessons.length>=1&&c.lessons.length<=100,`${name}需要1–100个上课时段`);
+   const lessons=c.lessons.map(l=>{check(l&&typeof l==='object',`${name}的时段格式错误`);check([l.day,l.start,l.end,l.fromWeek,l.toWeek].every(Number.isInteger),`${name}的星期、节次和周数必须为整数`);check(l.fromWeek>=1&&l.toWeek>=l.fromWeek&&l.toWeek<=settings.weeks,`${name}的结束周超过学期周数`);check(['all','odd','even'].includes(l.parity),`${name}的parity须为all、odd或even`);check(l.parity==='all'||(l.fromWeek<l.toWeek||l.fromWeek%2===(l.parity==='odd'?1:0)),`${name}的单双周范围内没有实际课次`);return {day:l.day,start:l.start,end:l.end,fromWeek:l.fromWeek,toWeek:l.toWeek,parity:l.parity,room:string(l.room,'教室',200)}});
+   next=Core.saveEntity(next,'courses',{name,shortName:string(c.shortName,'简称',100),teacher:string(c.teacher,'教师'),uniform:c.uniform||false,requirements:string(c.requirements,'课程要求'),grading:string(c.grading,'成绩构成'),remarks:string(c.remarks,'备注'),lessons,archived:false});
+  }
+  return next;
+ }
+ const example={format:'classnote-timetable',version:1,semester:{name:'2026–2027学年 第一学期',startDate:'2026-09-07',weeks:20},courses:[{name:'高等数学',shortName:'高数',teacher:'',uniform:false,requirements:'',grading:'',remarks:'',lessons:[{day:1,start:1,end:2,fromWeek:1,toWeek:20,parity:'all',room:'A101'}]}]};
+ const prompt=`请把我接下来提供的课表图片或文字整理成“课记”应用可导入的JSON。可以处理任何专业。\n先确认第一教学周周一的准确日期、学期总周数和看不清的信息；不要猜测，不确定请先问我。示例里的课程和日期只是格式示例，不要照抄。\n确认后只输出一个完整JSON对象，不要解释，不要代码块。格式如下：\n${JSON.stringify(example,null,2)}\n规则：format固定为classnote-timetable，version固定为1。semester.startDate必须是第一教学周的周一，YYYY-MM-DD；weeks为1到52的整数。courses每项是一门课，同一门课多个时段合并到lessons。name必填；其他文字未知填空字符串，uniform仅在明确要求穿制服时为true，否则false。day为星期一到星期日的数字1到7；start/end为开始和结束节次1到14；fromWeek/toWeek均为整数，且不能超过学期周数。parity处理单双周：all每周，odd单周，even双周。零散周分别列为多个时段，例如仅第3和第7周，写两个fromWeek与toWeek分别相等的时段。不要把周数、节次或星期写成字符串。room为教室文字，可为空。不要把日期调休混成固定周课表，调休在应用内单独设置。不要添加不存在的课程、作业、个人资料或图片。`;
+ return {prepare,prompt,example};
+});
