@@ -45,7 +45,7 @@ def main():
     run(bt/'zipalign','-f','4',unsigned,BUILD/'aligned.apk')
     key=ROOT/'signing/personal.jks';key.parent.mkdir(exist_ok=True)
     if not key.exists():run('keytool','-genkeypair','-keystore',key,'-storepass','classnote-local','-keypass','classnote-local','-alias','personal','-keyalg','RSA','-keysize','2048','-validity','10000','-dname','CN=ClassNote Personal, O=Personal Development, C=CN')
-    apk=BUILD/'classnote-1.5.0.apk'
+    apk=BUILD/'classnote-1.5.1.apk'
     run(bt/'apksigner','sign','--ks',key,'--ks-key-alias','personal','--ks-pass','pass:classnote-local','--key-pass','pass:classnote-local','--out',apk,BUILD/'aligned.apk')
     run(bt/'apksigner','verify','--verbose',apk)
     print('APK:',apk)
