@@ -1,0 +1,9 @@
+build/
+.gradle/
+local.properties
+*.jks
+*.keystore
+.superpowers/
+test-results/
+node_modules/
+.tools/
