@@ -14,7 +14,7 @@ import TapHandler from './tap-handler.js';
 const AXIS_SWIPE_HYSTERISIS = 6; // ClassNote: responsive drag recognition
 //const PAN_END_FRICTION = 0.35;
 
-const DOUBLE_TAP_DELAY = 220; // ClassNote: shorter single-tap wait; // ms
+const DOUBLE_TAP_DELAY = 350; // ClassNote: allow a natural double-tap interval, ms
 const MIN_TAP_DISTANCE = 25; // px
 
 /**
@@ -397,8 +397,10 @@ class Gestures {
       return;
     }
 
-    // Trigger click instead of tap for mouse events
-    if (e.type === 'mouseup' || e.pointerType === 'mouse') {
+    // ClassNote: recognize mouse double-clicks on photos before single-click close.
+    const isMouse = e.type === 'mouseup' || e.pointerType === 'mouse';
+    if (isMouse && (!this.pswp.options.doubleTapAction
+        || !e.target.closest('.pswp__img'))) {
       this.tapHandler.click(this.startP1, e);
       return;
     }
@@ -418,7 +420,11 @@ class Gestures {
     } else {
       equalizePoints(this._lastStartP1, this.startP1);
       this._tapTimer = setTimeout(() => {
-        this.tapHandler.tap(this.startP1, e);
+        if (isMouse) {
+          this.tapHandler.click(this.startP1, e);
+        } else {
+          this.tapHandler.tap(this.startP1, e);
+        }
         this._clearTapTimer();
       }, tapDelay);
     }
