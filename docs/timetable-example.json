@@ -1,0 +1,31 @@
+{
+  "format": "classnote-timetable",
+  "version": 1,
+  "semester": {
+    "name": "2026–2027学年 第一学期",
+    "startDate": "2026-09-07",
+    "weeks": 20
+  },
+  "courses": [
+    {
+      "name": "高等数学",
+      "shortName": "高数",
+      "teacher": "",
+      "uniform": false,
+      "requirements": "",
+      "grading": "",
+      "remarks": "",
+      "lessons": [
+        {
+          "day": 1,
+          "start": 1,
+          "end": 2,
+          "fromWeek": 1,
+          "toWeek": 20,
+          "parity": "all",
+          "room": "A101"
+        }
+      ]
+    }
+  ]
+}
