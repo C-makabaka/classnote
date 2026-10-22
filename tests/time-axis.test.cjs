@@ -1,0 +1,4 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),T=require('../app/src/main/assets/time-axis.js');
+const at=s=>new Date('2026-09-22T'+s+':00');
+test('time position at starts, midpoint, lunch, last end and outside day',()=>{assert.deepEqual(T.position(T.defaults,at('10:00')),{index:2,fraction:0,gap:false});assert.equal(T.position(T.defaults,at('10:30')).fraction,2/3);assert.equal(T.position(T.defaults,at('12:00')).gap,true);assert.equal(T.position(T.defaults,at('12:00')).index,3);assert.equal(T.position(T.defaults,at('22:30')).fraction,1);assert.equal(T.position(T.defaults,at('07:59')),null);assert.equal(T.position(T.defaults,at('22:31')),null)});
+test('reject invalid times and overlapping periods',()=>{const v=structuredClone(T.defaults);v[1]=['08:40','09:00'];assert.throws(()=>T.validate(v));v[1]=['25:00','26:00'];assert.throws(()=>T.validate(v));assert.throws(()=>T.validate([]))});
