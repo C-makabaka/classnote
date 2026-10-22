@@ -2,7 +2,7 @@ plugins { id 'com.android.application' }
 android {
     namespace 'cn.cbhcool.classnote'
     compileSdk 35
-    defaultConfig { applicationId 'cn.cbhcool.classnote'; minSdk 26; targetSdk 35; versionCode 12; versionName '1.5.0' }
+    defaultConfig { applicationId 'cn.cbhcool.classnote'; minSdk 26; targetSdk 35; versionCode 13; versionName '1.5.1' }
     signingConfigs { personal { storeFile rootProject.file('signing/personal.jks'); storePassword 'classnote-local'; keyAlias 'personal'; keyPassword 'classnote-local' } }
     buildTypes { debug { signingConfig signingConfigs.personal }; release { minifyEnabled false; signingConfig signingConfigs.personal } }
     compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
